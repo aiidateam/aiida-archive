@@ -1,6 +1,6 @@
 # aiida-archive [IN-DEVELOPMENT]
 
-This repository contains a package for prototyping a new archive format.
+This repository contains a package for prototyping a new archive format, to inform <https://github.com/aiidateam/AEP/pull/21>.
 
 - `aiida_archive/interface.py` provides an abstract base class for the backend API interface
 - `aiida_archive/backends` provides different backends to implements this interface.
