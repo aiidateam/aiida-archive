@@ -11,32 +11,48 @@ This package utilises [flit](https://flit.readthedocs.io) as the build engine, a
 
 To list all the development environments:
 
-```
-pip install tox
-tox -a -v
+```console
+$ pip install tox
+$ tox -a -v
 ```
 
 To try out the CLI:
 
-```
-tox -e py37-cli -- --help
+```console
+$ tox -e py37-cli -- --help
+py37-cli run-test: commands[0] | aiida-archive --help
+Usage: aiida-archive [OPTIONS] COMMAND [ARGS]...
+
+  The command line interface for aiida-archive
+
+Options:
+  -v, --version       Show the version and exit.
+  --list-backends     Print the available backend plugins and exit
+  -b, --backend TEXT  The entry point of the backend.  [default: current]
+  -p, --path FILE     Path to the archive file.  [default: aiida.archive]
+  -h, --help          Show this message and exit.
+
+Commands:
+  count     Print the number of nodes.
+  versions  Print the archive version information.
+
 ```
 
 To run the pytest suite:
 
-```
-tox -e py37
+```console
+$ tox -e py37
 ```
 
 To check type annotations:
 
-```
-tox -e py37-mypy
+```console
+$ tox -e py37-mypy
 ```
 
 To run the pre-commit style formatting and linting:
 
-```
-pip install pre-commit
-pre-commit run --all
+```console
+$ pip install pre-commit
+$ pre-commit run --all
 ```
