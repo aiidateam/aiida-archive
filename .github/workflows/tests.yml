@@ -20,12 +20,45 @@ jobs:
         python-version: 3.7
     - uses: pre-commit/action@v2.0.0
 
+  mypy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: install tox
+      run: pip install tox
+    - name: run mypy
+      run: tox -e py37-mypy
+
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
         os: [ubuntu-latest]
+
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_DB: test_${{ matrix.backend }}
+          POSTGRES_PASSWORD: ''
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672:5672
 
     steps:
     - uses: actions/checkout@v2
@@ -42,6 +75,9 @@ jobs:
         pip install flit
         flit install --deps=production --extras=test --pth-file
 
+    - name: Run reentry scan
+      run: reentry scan
+
     - name: Run pytest
       run: |
         pytest --cov=aiida_archive --cov-report=xml --cov-report=term-missing
@@ -57,7 +93,7 @@ jobs:
 
   publish:
     name: Publish to PyPi
-    needs: [pre-commit, tests]
+    needs: [pre-commit, mypy, tests]
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     runs-on: ubuntu-latest
     steps:
