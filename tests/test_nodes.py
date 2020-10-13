@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 BENCH_RECORDS = 1e5
 BENCH_ROUNDS_WRITE = 5
-BENCH_ROUNDS_QUERY = 100
+BENCH_ROUNDS_QUERY = 1000
 
 
 def write_json(archive, node_generator, records):
