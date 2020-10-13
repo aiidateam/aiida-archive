@@ -1,0 +1,309 @@
+{
+    "node_attributes": {
+        "8588": {
+            "is_local": false,
+            "append_text": "",
+            "input_plugin": "arithmetic.add",
+            "prepend_text": "",
+            "remote_exec_path": "/path/to/exec"
+        },
+        "8589": {},
+        "8590": {
+            "value": 3
+        },
+        "8591": {
+            "process_state": "finished",
+            "sealed": true
+        },
+        "8592": {
+            "resources": {
+                "num_machines": 1,
+                "num_mpiprocs_per_machine": 1,
+                "default_mpiprocs_per_machine": 1
+            },
+            "exit_status": 0,
+            "process_state": "finished",
+            "sealed": true
+        },
+        "8593": {
+            "remote_path": "/x/y.py"
+        },
+        "8594": {
+            "value": "abc"
+        },
+        "8595": {
+            "exit_status": 200,
+            "process_state": "finished",
+            "sealed": true
+        },
+        "8596": {},
+        "8597": {}
+    },
+    "node_extras": {
+        "8588": {
+            "_aiida_hash": "e70b0cf49bedd9ff64a86ef7402dabe6c03bd6652fdc82ba670927f4fcbb6e1e"
+        },
+        "8589": {
+            "_aiida_hash": "04d1872c4985106f4d27bcd7c18abfa64a63c92e30609505c0645c35daa88193"
+        },
+        "8590": {
+            "_aiida_hash": "342c4d74e847df45a6987ca8ccdbdd20e566f66809f14b5bd34a76b0127897cb"
+        },
+        "8591": {
+            "_aiida_hash": "4c561f83dbd90cb0351921947b1388f4510a9cf404243ade97d5856f821258b2"
+        },
+        "8592": {
+            "_aiida_hash": "06e603c3c7d3471bfe612fed66fca0ff6573597a007bc66247ba9407d0f70362"
+        },
+        "8593": {
+            "_aiida_hash": "3fd8117758d38efd5726bf14cf24ac0be511a4cba89b506ebb6264bb78a90af2"
+        },
+        "8594": {
+            "_aiida_hash": "75463962349f9310ccc4b2798e157c839b52d1e3ecbb567c88906cecc52eb816"
+        },
+        "8595": {
+            "_aiida_hash": "068e968afac856b847b181056426255e2964eb6dad5b075d05d4bc7d0f608fdc"
+        },
+        "8596": {
+            "_aiida_hash": "04d1872c4985106f4d27bcd7c18abfa64a63c92e30609505c0645c35daa88193"
+        },
+        "8597": {
+            "_aiida_hash": "04d1872c4985106f4d27bcd7c18abfa64a63c92e30609505c0645c35daa88193"
+        }
+    },
+    "export_data": {
+        "Node": {
+            "8588": {
+                "ctime": "2019-07-08T09:22:00.344636",
+                "uuid": "beeeb810-c694-4fee-aeca-d49a233b832b",
+                "mtime": "2019-07-08T09:22:00.366721",
+                "node_type": "data.code.Code.",
+                "label": "example_code",
+                "user": 1460,
+                "dbcomputer": 1476,
+                "description": "an example code",
+                "process_type": null
+            },
+            "8589": {
+                "ctime": "2019-07-08T09:22:00.387946",
+                "uuid": "0ea79a16-501f-408a-8c84-a2704a778e4b",
+                "mtime": "2019-07-08T09:22:00.394386",
+                "node_type": "data.dict.Dict.",
+                "label": "pd0",
+                "user": 1460,
+                "dbcomputer": null,
+                "description": "",
+                "process_type": null
+            },
+            "8590": {
+                "ctime": "2019-07-08T09:22:00.405485",
+                "uuid": "6b413465-37b0-4064-ac52-65f560b42194",
+                "mtime": "2019-07-08T09:22:00.415046",
+                "node_type": "data.int.Int.",
+                "label": "pd1",
+                "user": 1460,
+                "dbcomputer": null,
+                "description": "",
+                "process_type": null
+            },
+            "8591": {
+                "ctime": "2019-07-08T09:22:00.425732",
+                "uuid": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+                "mtime": "2019-07-08T09:22:00.594269",
+                "node_type": "process.workflow.workchain.WorkChainNode.",
+                "label": "",
+                "user": 1460,
+                "dbcomputer": null,
+                "description": "",
+                "process_type": null
+            },
+            "8592": {
+                "ctime": "2019-07-08T09:22:00.604745",
+                "uuid": "b23e692e-4e01-48dd-b515-4c63877d73a4",
+                "mtime": "2019-07-08T09:22:00.733468",
+                "node_type": "process.calculation.calcjob.CalcJobNode.",
+                "label": "calc1",
+                "user": 1460,
+                "dbcomputer": 1476,
+                "description": "",
+                "process_type": null
+            },
+            "8593": {
+                "ctime": "2019-07-08T09:22:00.743450",
+                "uuid": "33c97bcd-dc91-4a25-9874-11e519cb5a8e",
+                "mtime": "2019-07-08T09:22:00.753274",
+                "node_type": "data.remote.RemoteData.",
+                "label": "rd1",
+                "user": 1460,
+                "dbcomputer": 1476,
+                "description": "",
+                "process_type": null
+            },
+            "8594": {
+                "ctime": "2019-07-08T09:22:00.816763",
+                "uuid": "4ac72b6c-ce4c-4cb2-8053-9164c8f81437",
+                "mtime": "2019-07-08T09:22:00.826049",
+                "node_type": "data.str.Str.",
+                "label": "pd2",
+                "user": 1460,
+                "dbcomputer": null,
+                "description": "",
+                "process_type": null
+            },
+            "8595": {
+                "ctime": "2019-07-08T09:22:00.842961",
+                "uuid": "79e2417a-5aa5-4787-bd7c-74152cd8a729",
+                "mtime": "2019-07-08T09:22:00.985787",
+                "node_type": "process.calculation.calcfunction.CalcFunctionNode.",
+                "label": "calcf1",
+                "user": 1460,
+                "dbcomputer": null,
+                "description": "",
+                "process_type": null
+            },
+            "8596": {
+                "ctime": "2019-07-08T09:22:00.997988",
+                "uuid": "779636a5-bc18-4c76-8f8c-2c54bcb4868c",
+                "mtime": "2019-07-08T09:22:01.046205",
+                "node_type": "data.dict.Dict.",
+                "label": "pd3",
+                "user": 1460,
+                "dbcomputer": null,
+                "description": "",
+                "process_type": null
+            },
+            "8597": {
+                "ctime": "2019-07-08T09:22:00.998474",
+                "uuid": "387faed6-46a8-4a3c-a998-f60cd097086a",
+                "mtime": "2019-07-08T09:22:01.104162",
+                "node_type": "data.folder.FolderData.",
+                "label": "fd1",
+                "user": 1460,
+                "dbcomputer": null,
+                "description": "",
+                "process_type": null
+            }
+        },
+        "User": {
+            "1460": {
+                "last_name": "",
+                "first_name": "",
+                "institution": "",
+                "email": "chrisj_sewell@hotmail.com"
+            }
+        },
+        "Computer": {
+            "1476": {
+                "transport_type": "local",
+                "hostname": "localhost",
+                "description": "an example computer",
+                "scheduler_type": "direct",
+                "metadata": {
+                    "shebang": "#!/bin/bash",
+                    "workdir": "/path/to/work_dir",
+                    "append_text": "",
+                    "prepend_text": "",
+                    "mpirun_command": [
+                        "mpiexec"
+                    ],
+                    "default_mpiprocs_per_machine": 1
+                },
+                "uuid": "2322adaf-acbb-4bea-83b7-23eaed8399e8",
+                "name": "example_computer"
+            }
+        }
+    },
+    "links_uuid": [
+        {
+            "input": "6b413465-37b0-4064-ac52-65f560b42194",
+            "output": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+            "label": "input2",
+            "type": "input_work"
+        },
+        {
+            "input": "0ea79a16-501f-408a-8c84-a2704a778e4b",
+            "output": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+            "label": "input1",
+            "type": "input_work"
+        },
+        {
+            "input": "beeeb810-c694-4fee-aeca-d49a233b832b",
+            "output": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+            "label": "code",
+            "type": "input_work"
+        },
+        {
+            "input": "6b413465-37b0-4064-ac52-65f560b42194",
+            "output": "b23e692e-4e01-48dd-b515-4c63877d73a4",
+            "label": "input2",
+            "type": "input_calc"
+        },
+        {
+            "input": "0ea79a16-501f-408a-8c84-a2704a778e4b",
+            "output": "b23e692e-4e01-48dd-b515-4c63877d73a4",
+            "label": "input1",
+            "type": "input_calc"
+        },
+        {
+            "input": "beeeb810-c694-4fee-aeca-d49a233b832b",
+            "output": "b23e692e-4e01-48dd-b515-4c63877d73a4",
+            "label": "code",
+            "type": "input_calc"
+        },
+        {
+            "input": "4ac72b6c-ce4c-4cb2-8053-9164c8f81437",
+            "output": "79e2417a-5aa5-4787-bd7c-74152cd8a729",
+            "label": "input2",
+            "type": "input_calc"
+        },
+        {
+            "input": "33c97bcd-dc91-4a25-9874-11e519cb5a8e",
+            "output": "79e2417a-5aa5-4787-bd7c-74152cd8a729",
+            "label": "input1",
+            "type": "input_calc"
+        },
+        {
+            "input": "b23e692e-4e01-48dd-b515-4c63877d73a4",
+            "output": "33c97bcd-dc91-4a25-9874-11e519cb5a8e",
+            "label": "output",
+            "type": "create"
+        },
+        {
+            "input": "79e2417a-5aa5-4787-bd7c-74152cd8a729",
+            "output": "387faed6-46a8-4a3c-a998-f60cd097086a",
+            "label": "output2",
+            "type": "create"
+        },
+        {
+            "input": "79e2417a-5aa5-4787-bd7c-74152cd8a729",
+            "output": "779636a5-bc18-4c76-8f8c-2c54bcb4868c",
+            "label": "output1",
+            "type": "create"
+        },
+        {
+            "input": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+            "output": "387faed6-46a8-4a3c-a998-f60cd097086a",
+            "label": "output2",
+            "type": "return"
+        },
+        {
+            "input": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+            "output": "779636a5-bc18-4c76-8f8c-2c54bcb4868c",
+            "label": "output1",
+            "type": "return"
+        },
+        {
+            "input": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+            "output": "b23e692e-4e01-48dd-b515-4c63877d73a4",
+            "label": "call1",
+            "type": "call_calc"
+        },
+        {
+            "input": "0a8223e7-fc7f-490f-8c99-962c1e3e17af",
+            "output": "79e2417a-5aa5-4787-bd7c-74152cd8a729",
+            "label": "call2",
+            "type": "call_calc"
+        }
+    ],
+    "groups_uuid": {}
+}

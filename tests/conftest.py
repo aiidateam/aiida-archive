@@ -27,7 +27,7 @@ def provenance_tree():
         root: Optional[Data] = None,
         depth: int = 1,
         breadth: int = 1,
-        objects: int = 0
+        objects: int = 0,
     ) -> Data:
         """Recursively build a test provenance tree.
 
@@ -71,3 +71,19 @@ def provenance_tree():
         return root
 
     return _generate
+
+
+class MockNode:
+    def __init__(self, number):
+        self.uuid = f"{hex(int(number)):0>36}"
+
+
+@pytest.fixture()
+def node_generator():
+    """Generate a set number of mock nodes."""
+
+    def _func(number):
+        for i in range(number):
+            yield MockNode(i)
+
+    return _func

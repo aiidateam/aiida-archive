@@ -20,7 +20,11 @@ requires=[
     "aiida-core~=1.4.0",
     "packaging",
     "importlib_metadata; python_version < '3.8'",
-    "click"]
+    "click",
+    "jsonlines",
+    "sqlalchemy",
+    "tinydb"
+]
 
 [tool.flit.scripts]
 aiida-archive = "aiida_archive.cli:main"
@@ -34,6 +38,8 @@ test = [
     "coverage",
     "pytest-cov",
     "pgtest",
+    "pytest-benchmark",
+    "pytest-monitor",
 ]
 
 [tool.flit.sdist]
