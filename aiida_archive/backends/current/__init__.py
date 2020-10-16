@@ -5,9 +5,11 @@ from packaging.version import Version
 from aiida import load_profile
 from aiida.common.folders import SandboxFolder
 from aiida.orm import load_node
-from aiida.tools.importexport import Archive, export, import_data
+from aiida.tools.importexport import Archive, import_data
 
 from aiida_archive.interface import AiidaArchive
+
+from .export import export
 
 
 class NonRepoArchive(Archive):

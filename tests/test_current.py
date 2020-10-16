@@ -32,6 +32,8 @@ def test_iter_uuids_nodes(data_path):
 
 @pytest.mark.usefixtures("clear_database_before_test")
 def test_push(tmp_path, provenance_tree):
+    if (tmp_path / "aiida.archive").exists():
+        (tmp_path / "aiida.archive").unlink()
     archive = CurrentArchive(tmp_path / "aiida.archive")
     node = provenance_tree()
     archive.push([node.uuid])
