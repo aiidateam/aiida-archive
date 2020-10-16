@@ -1,10 +1,10 @@
-# type: ignore
 """Adapted from aiida/tools/importexport/dbexport/__init__.py """
 
 import logging
 import os
 import tarfile
 import time
+from typing import Any, Callable, Iterable, Optional, Tuple, Union, cast
 
 from aiida import get_version, orm
 from aiida.common import json
@@ -48,14 +48,14 @@ __all__ = ("export", "EXPORT_LOGGER", "ExportFileFormat")
 
 
 def export(
-    entities=None,
-    filename=None,
-    file_format=ExportFileFormat.ZIP,
-    overwrite=False,
-    silent=False,
-    use_compression=True,
-    **kwargs,
-):
+    entities: Optional[Iterable[Any]] = None,
+    filename: Optional[str] = None,
+    file_format: str = ExportFileFormat.ZIP,
+    overwrite: bool = False,
+    silent: bool = False,
+    use_compression: bool = True,
+    **kwargs: Any,
+) -> None:
     """Export AiiDA data
 
     .. deprecated:: 1.2.1
@@ -64,27 +64,21 @@ def export(
 
     :param entities: a list of entity instances;
         they can belong to different models/entities.
-    :type entities: list
 
     :param filename: the filename (possibly including the absolute path)
         of the file on which to export.
-    :type filename: str
 
     :param file_format: See `ExportFileFormat` for complete list of valid values (default: 'zip').
-    :type file_format: str, `ExportFileFormat`
 
     :param overwrite: if True, overwrite the output file without asking, if it exists.
         If False, raise an
         :py:class:`~aiida.tools.importexport.common.exceptions.ArchiveExportError`
         if the output file already exists.
-    :type overwrite: bool
 
     :param silent: suppress console prints and progress bar.
-    :type silent: bool
 
     :param use_compression: Whether or not to compress the archive file
         (only valid for the zip file format).
-    :type use_compression: bool
 
     :param allowed_licenses: List or function.
         If a list, then checks whether all licenses of Data nodes are in the list. If a function,
@@ -122,13 +116,19 @@ def export(
         )
 
     # Backwards-compatibility
-    entities = deprecated_parameters(
-        old={"name": "what", "value": kwargs.pop("what", None)},
-        new={"name": "entities", "value": entities},
+    entities = cast(
+        Iterable[Any],
+        deprecated_parameters(
+            old={"name": "what", "value": kwargs.pop("what", None)},
+            new={"name": "entities", "value": entities},
+        ),
     )
-    filename = deprecated_parameters(
-        old={"name": "outfile", "value": kwargs.pop("outfile", None)},
-        new={"name": "filename", "value": filename},
+    filename = cast(
+        str,
+        deprecated_parameters(
+            old={"name": "outfile", "value": kwargs.pop("outfile", None)},
+            new={"name": "filename", "value": filename},
+        ),
     )
 
     type_check(
@@ -194,7 +194,12 @@ def export(
         logging.disable(level=logging.NOTSET)
 
 
-def export_zip(entities=None, filename=None, use_compression=True, **kwargs):
+def export_zip(
+    entities: Optional[Iterable[Any]] = None,
+    filename: Optional[str] = None,
+    use_compression: bool = True,
+    **kwargs: Any,
+) -> Tuple[float, ...]:
     """Export in a zipped folder
 
     .. deprecated:: 1.2.1
@@ -202,23 +207,27 @@ def export_zip(entities=None, filename=None, use_compression=True, **kwargs):
         Please use `entities` and `filename` instead, respectively.
 
     :param entities: a list of entity instances; they can belong to different models/entities.
-    :type entities: list
 
     :param filename: the filename
         (possibly including the absolute path) of the file on which to export.
-    :type filename: str
 
     :param use_compression: Whether or not to compress the zip file.
-    :type use_compression: bool
+
     """
     # Backwards-compatibility
-    entities = deprecated_parameters(
-        old={"name": "what", "value": kwargs.pop("what", None)},
-        new={"name": "entities", "value": entities},
+    entities = cast(
+        Iterable[Any],
+        deprecated_parameters(
+            old={"name": "what", "value": kwargs.pop("what", None)},
+            new={"name": "entities", "value": entities},
+        ),
     )
-    filename = deprecated_parameters(
-        old={"name": "outfile", "value": kwargs.pop("outfile", None)},
-        new={"name": "filename", "value": filename},
+    filename = cast(
+        str,
+        deprecated_parameters(
+            old={"name": "outfile", "value": kwargs.pop("outfile", None)},
+            new={"name": "filename", "value": filename},
+        ),
     )
 
     type_check(
@@ -239,7 +248,11 @@ def export_zip(entities=None, filename=None, use_compression=True, **kwargs):
     return (time_start, time_end)
 
 
-def export_tar(entities=None, filename=None, **kwargs):
+def export_tar(
+    entities: Optional[Iterable[Any]] = None,
+    filename: Optional[str] = None,
+    **kwargs: Any,
+) -> Tuple[float, ...]:
     """Export the entries passed in the 'entities' list to a gzipped tar file.
 
     .. deprecated:: 1.2.1
@@ -247,20 +260,24 @@ def export_tar(entities=None, filename=None, **kwargs):
         Please use `entities` and `filename` instead, respectively.
 
     :param entities: a list of entity instances; they can belong to different models/entities.
-    :type entities: list
 
     :param filename: the filename (possibly including the absolute path)
         of the file on which to export.
-    :type filename: str
     """
     # Backwards-compatibility
-    entities = deprecated_parameters(
-        old={"name": "what", "value": kwargs.pop("what", None)},
-        new={"name": "entities", "value": entities},
+    entities = cast(
+        Iterable[Any],
+        deprecated_parameters(
+            old={"name": "what", "value": kwargs.pop("what", None)},
+            new={"name": "entities", "value": entities},
+        ),
     )
-    filename = deprecated_parameters(
-        old={"name": "outfile", "value": kwargs.pop("outfile", None)},
-        new={"name": "filename", "value": filename},
+    filename = cast(
+        str,
+        deprecated_parameters(
+            old={"name": "outfile", "value": kwargs.pop("outfile", None)},
+            new={"name": "filename", "value": filename},
+        ),
     )
 
     type_check(
@@ -290,48 +307,41 @@ def export_tar(entities=None, filename=None, **kwargs):
 
 @override_log_formatter("%(message)s")
 def export_tree(
-    entities=None,
-    folder=None,
-    allowed_licenses=None,
-    forbidden_licenses=None,
-    silent=False,
-    include_comments=True,
-    include_logs=True,
-    **kwargs,
-):
+    entities: Optional[Iterable[Any]] = None,
+    folder: Optional[Union[Folder, ZipFolder]] = None,
+    allowed_licenses: Optional[Union[list, Callable]] = None,
+    forbidden_licenses: Optional[Union[list, Callable]] = None,
+    silent: bool = False,
+    include_comments: bool = True,
+    include_logs: bool = True,
+    **kwargs: Any,
+) -> None:
     """Export the entries passed in the 'entities' list to a file tree.
 
     .. deprecated:: 1.2.1
         Support for the parameter `what` will be removed in `v2.0.0`. Please use `entities` instead.
 
     :param entities: a list of entity instances; they can belong to different models/entities.
-    :type entities: list
 
     :param folder: a temporary folder to build the archive before compression.
-    :type folder: :py:class:`~aiida.common.folders.Folder`
 
-    :param allowed_licenses: List or function. If a list,
-        then checks whether all licenses of Data nodes are in the list. If a function,
-        then calls function for licenses of Data nodes expecting True if license is allowed, False
-        otherwise.
-    :type allowed_licenses: list
+    :param allowed_licenses: List or function.
+        If a list, then checks whether all licenses of Data nodes are in the list.
+        If a function, then calls function for licenses of Data nodes,
+        expecting True if license is allowed, False otherwise.
 
-    :param forbidden_licenses: List or function. If a list,
-        then checks whether all licenses of Data nodes are in the list. If a function,
-        then calls function for licenses of Data nodes expecting True if license is allowed, False
-        otherwise.
-    :type forbidden_licenses: list
+    :param forbidden_licenses: List or function.
+        If a list, then checks whether all licenses of Data nodes are in the list.
+        If a function, then calls function for licenses of Data nodes,
+        expecting True if license is allowed, False otherwise.
 
     :param silent: suppress console prints and progress bar.
-    :type silent: bool
 
     :param include_comments: In-/exclude export of comments for given node(s) in ``entities``.
         Default: True, *include* comments in export (as well as relevant users).
-    :type include_comments: bool
 
     :param include_logs: In-/exclude export of logs for given node(s) in ``entities``.
         Default: True, *include* logs in export.
-    :type include_logs: bool
 
     :param kwargs: graph traversal rules. See :const:`aiida.common.links.GraphTraversalRules`
         what rule names are toggleable and what the defaults are.
@@ -351,9 +361,12 @@ def export_tree(
     EXPORT_LOGGER.debug("STARTING EXPORT...")
 
     # Backwards-compatibility
-    entities = deprecated_parameters(
-        old={"name": "what", "value": kwargs.pop("what", None)},
-        new={"name": "entities", "value": entities},
+    entities = cast(
+        Iterable[Any],
+        deprecated_parameters(
+            old={"name": "what", "value": kwargs.pop("what", None)},
+            new={"name": "entities", "value": entities},
+        ),
     )
 
     type_check(
@@ -368,6 +381,7 @@ def export_tree(
         (Folder, ZipFolder),
         msg="`folder` must be specified and given as an AiiDA Folder entity",
     )
+    folder = cast(Union[Folder, ZipFolder], folder)
 
     all_fields_info, unique_identifiers = get_all_fields_info()
 
@@ -588,7 +602,7 @@ def export_tree(
     if entries_to_add:
         progress_bar = get_progress_bar(total=len(entries_to_add), disable=silent)
 
-    export_data = defaultdict(dict)
+    export_data = defaultdict(dict)  # type: dict
     entity_separator = "_"
     for entity_name, partial_query in entries_to_add.items():
 
@@ -741,7 +755,7 @@ def export_tree(
 
     # Turn sets into lists to be able to export them as JSON metadata.
     for entity, entity_set in entities_starting_set.items():
-        entities_starting_set[entity] = list(entity_set)
+        entities_starting_set[entity] = list(entity_set)  # type: ignore
 
     metadata = {
         "aiida_version": get_version(),
