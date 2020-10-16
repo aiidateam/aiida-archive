@@ -1,10 +1,22 @@
 """Adapted from aiida/tools/importexport/dbexport/__init__.py """
-
+from collections import defaultdict
 import logging
 import os
 import tarfile
 import time
-from typing import Any, Callable, Iterable, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 from aiida import get_version, orm
 from aiida.common import json
@@ -314,7 +326,7 @@ def export_tree(
     silent: bool = False,
     include_comments: bool = True,
     include_logs: bool = True,
-    **kwargs: Any,
+    **traversal_rules: bool,
 ) -> None:
     """Export the entries passed in the 'entities' list to a file tree.
 
@@ -343,7 +355,8 @@ def export_tree(
     :param include_logs: In-/exclude export of logs for given node(s) in ``entities``.
         Default: True, *include* logs in export.
 
-    :param kwargs: graph traversal rules. See :const:`aiida.common.links.GraphTraversalRules`
+    :param traversal_rules: graph traversal rules.
+        See :const:`aiida.common.links.GraphTraversalRules`
         what rule names are toggleable and what the defaults are.
 
     :raises `~aiida.tools.importexport.common.exceptions.ArchiveExportError`:
@@ -351,9 +364,6 @@ def export_tree(
     :raises `~aiida.common.exceptions.LicensingException`:
         if any node is licensed under forbidden license.
     """
-    from collections import defaultdict
-
-    from aiida.tools.graph.graph_traversers import get_nodes_export
 
     if silent:
         logging.disable(level=logging.CRITICAL)
@@ -364,7 +374,7 @@ def export_tree(
     entities = cast(
         Iterable[Any],
         deprecated_parameters(
-            old={"name": "what", "value": kwargs.pop("what", None)},
+            old={"name": "what", "value": traversal_rules.pop("what", None)},
             new={"name": "entities", "value": entities},
         ),
     )
@@ -385,17 +395,115 @@ def export_tree(
 
     all_fields_info, unique_identifiers = get_all_fields_info()
 
-    entities_starting_set = defaultdict(set)
+    entities_starting_set, given_node_entry_ids = get_starting_node_ids(
+        entities, silent
+    )
 
-    # The set that contains the nodes ids of the nodes that should be exported
-    given_node_entry_ids = set()
-    given_log_entry_ids = set()
-    given_comment_entry_ids = set()
+    (
+        node_ids_to_be_exported,
+        node_pk_2_uuid_mapping,
+        links_uuid,
+        traversal_rules,
+    ) = collect_export_nodes(given_node_entry_ids, silent, **traversal_rules)
 
+    check_node_licenses(node_ids_to_be_exported, allowed_licenses, forbidden_licenses)
+
+    entries_queries = get_entry_queries(
+        node_ids_to_be_exported,
+        entities_starting_set,
+        node_pk_2_uuid_mapping,
+        silent,
+        include_comments,
+        include_logs,
+    )
+
+    export_data = get_export_data(entries_queries, silent)
+
+    # Close progress up until this point in order to print properly
+    close_progress_bar(leave=False)
+
+    # note this was originally below the attributes and group_uuid gather
+    check_process_nodes_sealed(
+        {
+            node_pk
+            for node_pk, content in export_data.get(NODE_ENTITY_NAME, {}).items()
+            if content["node_type"].startswith("process.")
+        }
+    )
+
+    model_data = sum(len(model_data) for model_data in export_data.values())
+    if not model_data:
+        EXPORT_LOGGER.log(msg="Nothing to store, exiting...", level=LOG_LEVEL_REPORT)
+        return
+    EXPORT_LOGGER.log(
+        msg=(
+            f"Exporting a total of {model_data} database entries, "
+            f"of which {len(node_ids_to_be_exported)} are Nodes."
+        ),
+        level=LOG_LEVEL_REPORT,
+    )
+
+    node_attributes, node_extras = get_node_data(
+        export_data, node_ids_to_be_exported, silent
+    )
+    groups_uuid = get_groups_uuid(export_data, silent)
+
+    # Turn sets into lists to be able to export them as JSON metadata.
+    for entity, entity_set in entities_starting_set.items():
+        entities_starting_set[entity] = list(entity_set)  # type: ignore
+
+    metadata = {
+        "aiida_version": get_version(),
+        "export_version": EXPORT_VERSION,
+        "all_fields_info": all_fields_info,
+        "unique_identifiers": unique_identifiers,
+        "export_parameters": {
+            "graph_traversal_rules": traversal_rules,
+            "entities_starting_set": entities_starting_set,
+            "include_comments": include_comments,
+            "include_logs": include_logs,
+        },
+    }
+
+    all_node_uuids = {node_pk_2_uuid_mapping[_] for _ in node_ids_to_be_exported}
+
+    write_to_archive(
+        folder,
+        metadata,
+        all_node_uuids,
+        export_data,
+        node_attributes,
+        node_extras,
+        groups_uuid,
+        links_uuid,
+        silent,
+    )
+
+    close_progress_bar(leave=False)
+
+    # Reset logging level
+    if silent:
+        logging.disable(level=logging.NOTSET)
+
+
+def get_starting_node_ids(
+    entities: List[Any], silent: bool
+) -> Tuple[DefaultDict[str, Set[str]], Set[int]]:
+    """Get the starting node UUIDs and PKs
+
+    :param entities: a list of entity instances
+    :param silent: suppress console prints and progress bar.
+
+    :raises exceptions.ArchiveExportError
+    :return: entities_starting_set, given_node_entry_ids
+    """
     # Instantiate progress bar - go through list of `entities`
     pbar_total = len(entities) + 1 if entities else 1
     progress_bar = get_progress_bar(total=pbar_total, leave=False, disable=silent)
     progress_bar.set_description_str("Collecting chosen entities", refresh=False)
+
+    entities_starting_set = defaultdict(set)
+    given_node_entry_ids = set()
 
     # I store a list of the actual dbnodes
     for entry in entities:
@@ -453,8 +561,19 @@ def export_tree(
 
         progress_bar.update()
 
-    # We will iteratively explore the AiiDA graph to find further nodes that should also be exported
-    # At the same time, we will create the links_uuid list of dicts to be exported
+    return entities_starting_set, given_node_entry_ids
+
+
+def collect_export_nodes(
+    given_node_entry_ids: Set[int], silent: bool, **traversal_rules: bool
+) -> Tuple[Set[int], Dict[int, str], List[dict], Dict[str, bool]]:
+    """Iteratively explore the AiiDA graph to find further nodes that should also be exported
+
+    At the same time, we will create the links_uuid list of dicts to be exported
+
+    :param silent: suppress console prints and progress bar.
+    """
+    from aiida.tools.graph.graph_traversers import get_nodes_export
 
     progress_bar = get_progress_bar(total=1, disable=silent)
     progress_bar.set_description_str(
@@ -462,7 +581,7 @@ def export_tree(
     )
 
     traverse_output = get_nodes_export(
-        starting_pks=given_node_entry_ids, get_links=True, **kwargs
+        starting_pks=given_node_entry_ids, get_links=True, **traversal_rules
     )
     node_ids_to_be_exported = traverse_output["nodes"]
     graph_traversal_rules = traverse_output["rules"]
@@ -491,11 +610,51 @@ def export_tree(
 
     progress_bar.update()
 
+    return (
+        node_ids_to_be_exported,
+        node_pk_2_uuid_mapping,
+        links_uuid,
+        graph_traversal_rules,
+    )
+
+
+def check_node_licenses(
+    node_ids_to_be_exported: Set[int],
+    allowed_licenses: Optional[Union[list, Callable]],
+    forbidden_licenses: Optional[Union[list, Callable]],
+) -> None:
+    # TODO (Spyros) To see better! Especially for functional licenses
+    # Check the licenses of exported data.
+    if allowed_licenses is not None or forbidden_licenses is not None:
+        builder = orm.QueryBuilder()
+        builder.append(
+            orm.Node,
+            project=["id", "attributes.source.license"],
+            filters={"id": {"in": node_ids_to_be_exported}},
+        )
+        # Skip those nodes where the license is not set (this is the standard behavior with Django)
+        node_licenses = [(a, b) for [a, b] in builder.all() if b is not None]
+        check_licenses(node_licenses, allowed_licenses, forbidden_licenses)
+
+
+def get_entry_queries(
+    node_ids_to_be_exported: Set[int],
+    entities_starting_set: DefaultDict[str, Set[str]],
+    node_pk_2_uuid_mapping: Dict[int, str],
+    silent: bool,
+    include_comments: bool = True,
+    include_logs: bool = True,
+) -> Dict[str, orm.QueryBuilder]:
+    """Gather partial queries for all entities to export."""
     # Progress bar initialization - Entities
     progress_bar = get_progress_bar(total=1, disable=silent)
     progress_bar.set_description_str(
         "Initializing export of all entities", refresh=True
     )
+
+    given_log_entry_ids = set()
+    given_comment_entry_ids = set()
+    all_fields_info, _ = get_all_fields_info()
 
     # Universal "entities" attributed to all types of nodes
     # Logs
@@ -581,30 +740,32 @@ def export_tree(
         )
         entries_to_add[given_entity] = builder
 
-    # TODO (Spyros) To see better! Especially for functional licenses
-    # Check the licenses of exported data.
-    if allowed_licenses is not None or forbidden_licenses is not None:
-        builder = orm.QueryBuilder()
-        builder.append(
-            orm.Node,
-            project=["id", "attributes.source.license"],
-            filters={"id": {"in": node_ids_to_be_exported}},
-        )
-        # Skip those nodes where the license is not set (this is the standard behavior with Django)
-        node_licenses = [(a, b) for [a, b] in builder.all() if b is not None]
-        check_licenses(node_licenses, allowed_licenses, forbidden_licenses)
+    return entries_to_add
 
-    ############################################################
-    # Start automatic recursive export data generation #####
-    ############################################################
+
+def get_export_data(
+    entries_queries: Dict[str, orm.QueryBuilder], silent: bool
+) -> Dict[str, Dict[int, dict]]:
+    """Start automatic recursive export data generation
+
+    :param entries_queries: partial queries for all entities to export
+    :param silent: suppress console prints and progress bar.
+
+    :return: export data mappings by entity type -> pk -> db_columns, e.g.
+        {'ENTITY_NAME': {<pk>: {'uuid': 'abc', ...}, ...}, ...}
+        Note: this data does not yet contain attributes and extras
+
+    """
     EXPORT_LOGGER.debug("GATHERING DATABASE ENTRIES...")
 
-    if entries_to_add:
-        progress_bar = get_progress_bar(total=len(entries_to_add), disable=silent)
+    all_fields_info, _ = get_all_fields_info()
+
+    if entries_queries:
+        progress_bar = get_progress_bar(total=len(entries_queries), disable=silent)
 
     export_data = defaultdict(dict)  # type: dict
     entity_separator = "_"
-    for entity_name, partial_query in entries_to_add.items():
+    for entity_name, partial_query in entries_queries.items():
 
         progress_bar.set_description_str(f"Exporting {entity_name}s", refresh=False)
         progress_bar.update()
@@ -643,26 +804,21 @@ def export_tree(
                     }
                 )
 
-    # Close progress up until this point in order to print properly
-    close_progress_bar(leave=False)
+    return export_data
 
-    #######################################
-    # Manually manage attributes and extras
-    #######################################
-    # Pointer. Renaming, since Nodes have now technically been retrieved and "stored"
-    all_node_pks = node_ids_to_be_exported
 
-    model_data = sum(len(model_data) for model_data in export_data.values())
-    if not model_data:
-        EXPORT_LOGGER.log(msg="Nothing to store, exiting...", level=LOG_LEVEL_REPORT)
-        return
-    EXPORT_LOGGER.log(
-        msg=(
-            f"Exporting a total of {model_data} database entries, "
-            f"of which {len(all_node_pks)} are Nodes."
-        ),
-        level=LOG_LEVEL_REPORT,
-    )
+def get_node_data(
+    export_data: Dict[str, Dict[int, dict]], all_node_pks: Set[int], silent: bool
+) -> Tuple[Dict[str, dict], Dict[str, dict]]:
+    """Gather attributes and extras for nodes
+
+    :param export_data:  mappings by entity type -> pk -> db_columns
+    :param all_node_pks: set of pks
+    :param silent: for progress printing
+
+    :return: attributes, extras
+
+    """
 
     # Instantiate new progress bar
     progress_bar = get_progress_bar(total=1, leave=False, disable=silent)
@@ -692,6 +848,13 @@ def export_tree(
             node_attributes[str(node_pk)] = attributes
             node_extras[str(node_pk)] = extras
 
+    return node_attributes, node_extras
+
+
+def get_groups_uuid(
+    export_data: Dict[str, Dict[int, dict]], silent: bool
+) -> Dict[str, List[str]]:
+    """Get node UUIDs per group."""
     EXPORT_LOGGER.debug("GATHERING GROUP ELEMENTS...")
     groups_uuid = defaultdict(list)
     # If a group is in the exported data, we export the group/node correlation
@@ -720,16 +883,21 @@ def export_tree(
 
             groups_uuid[group_uuid].append(node_uuid)
 
-    #######################################
-    # Final check for unsealed ProcessNodes
-    #######################################
-    process_nodes = set()
-    for node_pk, content in export_data.get(NODE_ENTITY_NAME, {}).items():
-        if content["node_type"].startswith("process."):
-            process_nodes.add(node_pk)
+    return groups_uuid
 
-    check_process_nodes_sealed(process_nodes)
 
+def write_to_archive(
+    folder: Union[Folder, ZipFolder],
+    metadata: dict,
+    all_node_uuids: Set[str],
+    export_data: Dict[str, Dict[int, dict]],
+    node_attributes: Dict[str, dict],
+    node_extras: Dict[str, dict],
+    groups_uuid: Dict[str, List[str]],
+    links_uuid: List[dict],
+    silent: bool,
+) -> None:
+    """Store data to the archive."""
     ######################################
     # Now collecting and storing
     ######################################
@@ -753,31 +921,13 @@ def export_tree(
         # fhandle.write(json.dumps(data, cls=UUIDEncoder))
         fhandle.write(json.dumps(data))
 
-    # Turn sets into lists to be able to export them as JSON metadata.
-    for entity, entity_set in entities_starting_set.items():
-        entities_starting_set[entity] = list(entity_set)  # type: ignore
-
-    metadata = {
-        "aiida_version": get_version(),
-        "export_version": EXPORT_VERSION,
-        "all_fields_info": all_fields_info,
-        "unique_identifiers": unique_identifiers,
-        "export_parameters": {
-            "graph_traversal_rules": graph_traversal_rules,
-            "entities_starting_set": entities_starting_set,
-            "include_comments": include_comments,
-            "include_logs": include_logs,
-        },
-    }
-
     with folder.open("metadata.json", "w") as fhandle:
         fhandle.write(json.dumps(metadata))
 
     EXPORT_LOGGER.debug("ADDING REPOSITORY FILES TO EXPORT ARCHIVE...")
 
     # If there are no nodes, there are no repository files to store
-    if all_node_pks:
-        all_node_uuids = {node_pk_2_uuid_mapping[_] for _ in all_node_pks}
+    if all_node_uuids:
 
         progress_bar = get_progress_bar(total=len(all_node_uuids), disable=silent)
         pbar_base_str = "Exporting repository - "
@@ -808,9 +958,3 @@ def export_tree(
 
             # In this way, I copy the content of the folder, and not the folder itself
             thisnodefolder.insert_path(src=src.abspath, dest_name=".")
-
-    close_progress_bar(leave=False)
-
-    # Reset logging level
-    if silent:
-        logging.disable(level=logging.NOTSET)
